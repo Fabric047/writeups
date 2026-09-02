@@ -24,7 +24,7 @@ username=fabric047
 password=Test12345%^6789
 invitationCode=aaaa-bbbb-1111
 
-![CreateAccount](imgs/createaccount.png)
+![CreateAccount](imgs/create_account.png)
 
 pero nos aparece el mensaje: "Invalid invitation code" ya que no existe ese codigo de invitacion (porque lo inventamos)
 
