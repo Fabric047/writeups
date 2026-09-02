@@ -5,7 +5,7 @@
 
 ---
 
-### 1. What is the password hash for the user 'admin'?
+## 1. What is the password hash for the user 'admin'?
 
 **Respuesta:** `$argon2i$v=19$m=2048,t=4,p=3$dk4wdDBraE0zZVllcEUudA$CdU8zKxmToQybvtHfs1d5nHzjxw9DhkdcVToq6HTgvU`
 
@@ -15,13 +15,87 @@
 2. Escribimos en el chromium el objetivo (target): `https://154.57.164.82:30381` (en mi caso)
 Es https (con la `s` al final)
 
-4. 
 
-![Captura del hash](img/admin-hash.png)
+![BurpSuite](imgs/burp.png)
+
+3. Le damos en "create account" para crear una cuenta:
+En mi caso yo pondre los datos:
+username=fabric047
+password=Test12345%^6789
+invitationCode=aaaa-bbbb-1111
+
+![CreateAccount](imgs/createaccount.png)
+
+pero nos aparece el mensaje: "Invalid invitation code" ya que no existe ese codigo de invitacion (porque lo inventamos)
+
+![InvalidInvitationCode](imgs/invalid_invitationcode.png)
+
+4. Usemos el Burp Suite:
+
+En el burp activamos el intercept (intercept on) en Proxy>Intercept
+Con el intercept on, entramos a la pagina y ponemos los datos de nuevo
+username=fabric047
+password=Test12345%^6789
+invitationCode=aaaa-bbbb-1111
+
+
+5. Al darle click en "create acount", notaremos que la pagina queda cargando
+
+Entraremos al burp de nuevo y tendremos el method post. Luego le damos en "send to repeater":
+
+![Send_to_Repeater](imgs/sendtorepeater.png)
+
+6. Nos vamos al repeater:
+
+![Repeater](imgs/repeater1.png)
+
+Abajo tenemos esto:
+```
+username=fabric047&password=Test12345%25%5E6789&repeatPassword=Test12345%25%5E6789&invitationCode=abcd-efgh-1234
+```
+
+Le agregamos `'or'1'='1` y quedara asi:
+
+```
+username=fabric047&password=Test12345%25%5E6789&repeatPassword=Test12345%25%5E6789&invitationCode=abcd-efgh-1234'or'1'='1
+```
+
+## Porque agregamos `'or'1'='1`?
+
+Supongamos que la aplicación comprueba el código de invitación con una consulta parecida a:
+```
+SELECT * FROM invitations
+WHERE code = 'aaaa-bbbb-1111';
+```
+Si tú introduces simplemente: `aaaa-bbbb-1111` la aplicacion ejecuta `WHERE code = 'aaaa-bbbb-1111'` y no lo acepta ya que ese codigo no existe
+
+En cambio, si pones `aaaa-bbbb-1111' or '1'='1`, se ejecuta algo asi:
+```
+WHERE code = 'aaaa-bbbb-1111'     <-- Eso es Falso
+    OR
+'1' = '1'                         <-- Eso es Verdadero (1 es igual a 1)
+```
+Sabemos que Falso OR Verdadero es igual a Verdadero
+
+7. Le damos en "send":
+
+![Repeater2](imgs/repeater2.png)
+
+y en el Response>Pretty ( a la derecha ) obtendremos: Location: /login.php?s=account+created+successfully!
+
+
+8. Entramos a la pagina y le damos en login para iniciar sesion con el usuario y password con el que nos registramos
+
+![Login](imgs/login.png)
+
+
+
+
+
 
 ---
 
-### 2. What is the root path of the web application?
+## 2. What is the root path of the web application?
 
 **Respuesta:** `/var/www/chattr-prod`
 
@@ -34,6 +108,6 @@ Para descubrir la ruta raíz:
 
 ---
 
-### 3. Achieve remote code execution, and submit the contents of /flag_XXXXXX.txt below.
+## 3. Achieve remote code execution, and submit the contents of /flag_XXXXXX.txt below.
 **Respuesta:** `061b1aeb94dec6bf5d9c27032b3c1d8d`
 
