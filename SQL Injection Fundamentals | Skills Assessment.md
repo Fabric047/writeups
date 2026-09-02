@@ -127,7 +127,7 @@ Vamos a ver sus columnas:
 xd') union select 1,2,COLUMN_NAME,4 from INFORMATION_SCHEMA.COLUMNS where table_name='Users'-- -
 ```
 
-![Columnas](imgs/columnas.png)
+![Columnas](imgs/columns.png)
 
 Ahora sabemos que la tabla Users es algo asi:
 
