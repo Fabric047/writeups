@@ -10,16 +10,12 @@
 **Respuesta:** `$argon2i$v=19$m=2048,t=4,p=3$dk4wdDBraE0zZVllcEUudA$CdU8zKxmToQybvtHfs1d5nHzjxw9DhkdcVToq6HTgvU`
 
 #### Procedimiento:
-Explicamos cómo logramos extraer el hash mediante SQLi:
+1. Abrimo Burp Suite y nos vamos a Proxy>Intercept>Open Browser
 
-1. Probamos una inyección booleana en el parámetro vulnerable:
-   ```sql
-   admin' OR 1=1-- -
-   ```
-2. Extrajimos la columna `password` de la tabla de usuarios:
-   ```sql
-   ' UNION SELECT 1, password, 3 FROM users-- -
-   ```
+2. Escribimos en el chromium el objetivo (target): `https://154.57.164.82:30381` (en mi caso)
+Es https (con la `s` al final)
+
+4. 
 
 ![Captura del hash](img/admin-hash.png)
 
